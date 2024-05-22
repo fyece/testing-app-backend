@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  fullname    String
+  email       String    @unique
+  phoneNumber String?
+  jobTitle    String?
+  password    String
+  role        UserRole
+  group       Group?      @relation(fields: [groupId], references: [id])
+  groupId     Int?
+  tests       UserTest[]
+  results     Result[]
+  userAnswers UserAnswer[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
+} 
+
+model Group {
+  id           Int       @id @default(autoincrement())
+  name         String
+  description  String?
+  ownerId      Int
+  members      User[]
+  groupTests   GroupTest[]
+  results      Result[]
+}
+
+model Test {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String
+  ownerId     Int
+  questions   Question[]
+  results     Result[]
+  userAnswers UserAnswer[]
+  groupTests  GroupTest[]
+  userTests  UserTest[]
+}
+
+model UserTest {
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  test        Test      @relation(fields: [testId], references: [id])
+  testId      Int
+  isDone      Boolean   @default(false)
+  result      Result?   @relation(fields: [resultId], references: [id])
+  resultId    Int?      @unique
+
+  @@unique([userId, testId], map: "userIdTestIdUnique")
+}
+
+model GroupTest {
+  group       Group     @relation(fields: [groupId], references: [id])
+  groupId     Int
+  test        Test      @relation(fields: [testId], references: [id])
+  testId      Int
+
+  @@unique([groupId, testId], map: "groupIdTestIdUnique")
+}
+
+model Question {
+  id          Int       @id @default(autoincrement())
+  text        String
+  type        String
+  points      Int
+  tests       Test      @relation(fields: [testId], references: [id])
+  testId      Int
+  answers     Answer[]
+  userAnswers UserAnswer[]
+}
+
+model Answer {
+  id          Int       @id @default(autoincrement())
+  text        String
+  isCorrect   Boolean
+  question    Question  @relation(fields: [questionId], references: [id])
+  questionId  Int
+}
+
+model UserAnswer {
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  test        Test      @relation(fields: [testId], references: [id])
+  testId      Int
+  question    Question  @relation(fields: [questionId], references: [id])
+  questionId  Int
+  answerIds   Int[]
+  textAnswer  String?
+
+  @@unique([userId, questionId], map: "userIdQuestionIdUnique")
+}
+
+model Result {
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+  group       Group     @relation(fields: [groupId], references: [id])
+  groupId     Int
+  test        Test      @relation(fields: [testId], references: [id])
+  testId      Int
+  userTest    UserTest?
+  score       Int
+  totalScore  Int
+}
