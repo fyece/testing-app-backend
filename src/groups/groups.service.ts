@@ -13,17 +13,75 @@ export class GroupsService {
     return newGroup;
   }
 
-  findAll() {
-    const groups = this.prisma.group.findMany();
-    return groups;
+  async findAll() {
+    const groups = await this.prisma.group.findMany({
+      include: {
+        _count: {
+          select: {
+            members: true,
+            groupTests: true,
+          },
+        },
+        results: {
+          select: {
+            score: true,
+            totalScore: true,
+          },
+        },
+      },
+    });
+
+    const formattedGroups = groups.map((group) => {
+      const totalScore = group.results.reduce(
+        (acc, result) => acc + (result.score / result.totalScore) * 100,
+        0,
+      );
+      const averageResultPercent =
+        group.results.length > 0 ? totalScore / group.results.length : null;
+
+      return {
+        ...group,
+        totalUsers: group._count.members,
+        totalTests: group._count.groupTests,
+        averageResultPercent,
+      };
+    });
+
+    return formattedGroups;
   }
 
-  findOne(id: number) {
-    const group = this.prisma.group.findUnique({ where: { id: id } });
-    if (!group) {
-      return null;
-    }
-    return group;
+  async findOne(id: number) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: id },
+      include: {
+        _count: {
+          select: {
+            members: true,
+            groupTests: true,
+          },
+        },
+        results: {
+          select: {
+            score: true,
+            totalScore: true,
+          },
+        },
+      },
+    });
+
+    const totalScore = group.results.reduce(
+      (acc, result) => acc + (result.score / result.totalScore) * 100,
+      0,
+    );
+    const averageResultPercent =
+      group.results.length > 0 ? totalScore / group.results.length : null;
+
+    return {
+      ...group,
+      totalUsers: group._count.members,
+      totalTests: group._count.groupTests,
+      averageResultPercent,
+    };
   }
 
   update(id: number, updateGroupDto: UpdateGroupDto) {

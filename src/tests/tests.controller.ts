@@ -16,6 +16,13 @@ import { UpdateTestDto } from './dto/update-test.dto';
 export class TestsController {
   constructor(private readonly testsService: TestsService) {}
 
+  
+  @Get('user')
+  getUserTests(@Req() req) {
+    const userId = +req['user'].id;
+    return this.testsService.getUserTests(userId);
+  }
+
   @Post()
   create(@Req() req, @Body() createTestDto: CreateTestDto) {
     const ownerId = +req['user'].id;

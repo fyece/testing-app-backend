@@ -120,4 +120,36 @@ export class TestsService {
       throw new Error(`Failed to get users ids from groups: ${error.message}`);
     }
   }
+
+  async getUserTests(userId: number) {
+    const userTests = await this.prisma.userTest.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        test: {
+          include: {
+            questions: false,
+            _count: {
+              select: {
+                questions: true,
+              },
+            }
+        },
+      },
+        result: true,
+      },
+
+    });
+
+    if (userTests) {
+      return userTests.map((userTest) => ({
+        ...userTest.test,
+        isDone: userTest.isDone,
+        result: userTest.result,
+        questionsCount: userTest.test._count.questions
+      }));
+    }
+    return null;
+  }
 }
