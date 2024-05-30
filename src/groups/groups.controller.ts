@@ -55,4 +55,8 @@ export class GroupsController {
   getAllGroupTests(@Param('id') id: string) {
     return this.groupsService.getAllGroupTests(+id);
   }
+  @Get(':id/members')
+  findGroupUsers(@Param('id') id: string) {
+    return this.groupsService.findGroupUsers(+id);
+  }
 }

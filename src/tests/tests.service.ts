@@ -38,9 +38,38 @@ export class TestsService {
     return newTest;
   }
 
-  findAll() {
-    const tests = this.prisma.test.findMany();
-    return tests;
+  async findAll() {
+    const tests = await this.prisma.test.findMany({
+      include: {
+        userTests: true,
+        results: true,
+        _count: {
+          select: {
+            userTests: true,
+          },
+        },
+      },
+    });
+
+    const formattedTests = tests.map((test) => {
+      let testsScoreSum = 0;
+      let testTotalScoreSum = 0;
+      test.results.forEach((result) => {
+        testsScoreSum = testsScoreSum + result.score;
+        testTotalScoreSum = testTotalScoreSum + result.totalScore;
+      });
+
+      return {
+        ...test,
+        totalUsers: test._count.userTests,
+        averageResultPercent:
+          testTotalScoreSum > 0
+            ? Math.round(testsScoreSum / testTotalScoreSum) * 100
+            : null,
+      };
+    });
+
+    return formattedTests;
   }
 
   findOne(id: number) {
@@ -134,12 +163,11 @@ export class TestsService {
               select: {
                 questions: true,
               },
-            }
+            },
+          },
         },
-      },
         result: true,
       },
-
     });
 
     if (userTests) {
@@ -147,9 +175,26 @@ export class TestsService {
         ...userTest.test,
         isDone: userTest.isDone,
         result: userTest.result,
-        questionsCount: userTest.test._count.questions
+        questionsCount: userTest.test._count.questions,
       }));
     }
     return null;
+  }
+
+  async getAllTestResultsByTestId(testId: number) {
+    const results = await this.prisma.userTest.findMany({
+      where: {
+        testId,
+      },
+      include: {
+        user: {
+          include: {
+            group: true,
+          }
+        },
+        result: true,
+      },
+    });
+    return results;
   }
 }

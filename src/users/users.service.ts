@@ -14,9 +14,31 @@ export class UsersService {
       },
       include: {
         group: true,
+        results: true,
+        tests: true,
       },
     });
-    return users;
+
+    const formattedUsers = users.map((user) => {
+      let scoreSum = 0 
+      let totalScoreSum = 0
+      let averageResultPercent = null
+      user.results.forEach((result) => {
+        scoreSum += result.score
+        totalScoreSum += result.totalScore
+      })
+
+      if(totalScoreSum > 0) {
+        averageResultPercent = Math.round(scoreSum / totalScoreSum) * 100
+      }
+      return {
+        ...user,
+        testsPassed: user.tests.filter((test) => test.isDone).length,
+        testsTotal: user.tests.length,
+        averageResultPercent
+      }
+    })
+    return formattedUsers;
   }
 
   async findOne(email: string): Promise<User | undefined> {
