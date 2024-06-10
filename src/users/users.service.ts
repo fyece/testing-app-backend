@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import { CreateUser } from './types';
 import { User } from '@prisma/client';
+import { Role } from 'src/auth/role.enum';
 
 @Injectable()
 export class UsersService {
@@ -67,7 +68,10 @@ export class UsersService {
 
   async createUser(data: CreateUser): Promise<User> {
     const newUser = await this.prisma.user.create({
-      data,
+      data: {
+        ...data,
+        role: data.role ?? "USER",
+      },
     });
     return newUser;
   }
