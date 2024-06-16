@@ -15,6 +15,12 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @Get('stats')
+  getUserStats(@Req() req) {
+    const userId = +req['user'].id;
+    return this.usersService.getUserStatsById(userId);
+  }
+
   @Get(':id')
   findById(@Param('id') id: string) {
     return this.usersService.findById(+id);

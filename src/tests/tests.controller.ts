@@ -11,12 +11,12 @@ import {
 import { TestsService } from './tests.service';
 import { CreateTestDto } from './dto/create-test.dto';
 import { UpdateTestDto } from './dto/update-test.dto';
+import { UserTestDto } from './tests.interface';
 
 @Controller('tests')
 export class TestsController {
   constructor(private readonly testsService: TestsService) {}
 
-  
   @Get('user')
   getUserTests(@Req() req) {
     const userId = +req['user'].id;
@@ -68,5 +68,17 @@ export class TestsController {
     @Body('groupsId') groupsId: number[],
   ) {
     return this.testsService.addGroupsToTest(+testId, groupsId);
+  }
+
+  @Post('submit')
+  submitTest(@Req() req, @Body() testData: UserTestDto) {
+    const userId = +req['user'].id;
+    return this.testsService.submitTest(userId, testData);
+  }
+
+  @Get('results/:id')
+  getTestResult(@Req() req, @Param('id') testId: string) {
+    const userId = +req['user'].id;
+    return this.testsService.getUserTestResult(userId, +testId);
   }
 }

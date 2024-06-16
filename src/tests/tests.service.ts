@@ -2,10 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { CreateTestDto } from './dto/create-test.dto';
 import { UpdateTestDto } from './dto/update-test.dto';
 import { PrismaService } from 'src/prisma.service';
+import { UserTestDto } from './tests.interface';
+import { arraysEqual } from './utils';
 
 @Injectable()
 export class TestsService {
   constructor(private prisma: PrismaService) {}
+
   create(ownerId: number, createTestDto: CreateTestDto) {
     const newTest = this.prisma.test.create({
       data: {
@@ -190,11 +193,144 @@ export class TestsService {
         user: {
           include: {
             group: true,
-          }
+          },
         },
         result: true,
       },
     });
     return results;
+  }
+
+  async submitTest(userId: number, body: UserTestDto) {
+    let userScore = 0;
+    let testTotalScore = 0;
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        group: true,
+      },
+    });
+
+    const test = await this.prisma.test.findUnique({
+      where: {
+        id: body.testId,
+      },
+      include: {
+        questions: {
+          include: {
+            answers: true,
+          },
+        },
+      },
+    });
+
+    await this.prisma.userAnswer.createMany({
+      data: body.answers.map((answer) => ({
+        testId: body.testId,
+        userId,
+        questionId: answer.questionId,
+        answerIds: answer.answerIds,
+        textAnswer: answer.textAnswer,
+      })),
+    });
+
+    const userAnswers = await this.prisma.userAnswer.findMany({
+      where: {
+        testId: body.testId,
+        userId,
+      },
+    });
+
+    test.questions.forEach((question) => {
+      testTotalScore = testTotalScore + question.points;
+
+      const correctAnswers = question.answers.filter(
+        (answer) => answer.isCorrect && answer.questionId === question.id,
+      );
+
+      const userAnswer = userAnswers.find(
+        (answer) => answer.questionId === question.id,
+      );
+
+      if (question.type === 'single') {
+        const isUserAnswerCorrect =
+          userAnswer.answerIds[0] === correctAnswers[0].id;
+
+        userScore = userScore + (isUserAnswerCorrect ? question.points : 0);
+      }
+
+      if (question.type === 'multiple') {
+        const isUserAnswerCorrect = arraysEqual(
+          userAnswer.answerIds.sort(),
+          correctAnswers.map((answer) => answer.id).sort(),
+        );
+
+        userScore = userScore + (isUserAnswerCorrect ? question.points : 0);
+      }
+
+      if (question.type === 'text') {
+        const isUserAnswerCorrect = correctAnswers
+          .map((answer) => answer.text.toLocaleLowerCase())
+          .includes(userAnswer.textAnswer.toLocaleLowerCase());
+
+        userScore = userScore + (isUserAnswerCorrect ? question.points : 0);
+      }
+    });
+
+    const userTest = await this.prisma.userTest.update({
+      where: {
+        userId_testId: {
+          userId,
+          testId: body.testId,
+        },
+      },
+      data: {
+        isDone: true,
+        result: {
+          create: {
+            score: userScore,
+            totalScore: testTotalScore,
+            user: {
+              connect: {
+                id: userId,
+              },
+            },
+            test: {
+              connect: {
+                id: body.testId,
+              },
+            },
+            group: {
+              connect: {
+                id: user.group.id,
+              },
+            },
+          },
+        },
+      },
+      include: {
+        result: true,
+      },
+    });
+
+    return userTest;
+  }
+
+  async getUserTestResult(userId: number, testId: number) {
+    const result = await this.prisma.result.findFirst({
+      where: {
+        userId,
+        testId,
+      },
+      include: {
+        user: true,
+        test: true,
+      },
+    });
+
+    return result;
   }
 }

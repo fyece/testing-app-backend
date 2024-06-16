@@ -90,4 +90,22 @@ export class UsersService {
     }
     return null;
   }
+
+  async getUserStatsById(userId: number) {
+    const userTests = await this.prisma.userTest.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        result: true,
+      },
+    })
+    
+    const userStats = {
+      testsPassed: userTests.filter((userTest) => userTest.isDone).length,
+      testsTotal: userTests.length,
+      averageResultPercent: userTests.filter((userTest) => userTest.isDone).reduce((acc, curr) => acc + curr.result.score, 0) / userTests.reduce((acc, curr) => acc + curr.result?.totalScore, 0)
+    }
+    return userStats
+  }
 }
