@@ -67,7 +67,7 @@ export class TestsService {
         totalUsers: test._count.userTests,
         averageResultPercent:
           testTotalScoreSum > 0
-            ? Math.round(testsScoreSum / testTotalScoreSum) * 100
+            ? Number(((testsScoreSum / testTotalScoreSum) * 100).toFixed(0))
             : null,
       };
     });

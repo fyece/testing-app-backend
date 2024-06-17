@@ -30,7 +30,7 @@ export class UsersService {
       })
 
       if(totalScoreSum > 0) {
-        averageResultPercent = Math.round(scoreSum / totalScoreSum) * 100
+        averageResultPercent = Number((scoreSum / totalScoreSum * 100).toFixed(0))
       }
       return {
         ...user,
