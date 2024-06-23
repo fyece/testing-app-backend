@@ -34,6 +34,11 @@ export class TestsController {
     return this.testsService.findAll();
   }
 
+  @Get('results')
+  getUserTestsResults() {
+    return this.testsService.getUsersTestsResults();
+  }
+
   @Get(':id/results')
   getAllTestResultsByTestId(@Param('id') testId: number) {
     return this.testsService.getAllTestResultsByTestId(+testId);

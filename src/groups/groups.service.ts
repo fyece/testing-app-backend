@@ -37,7 +37,7 @@ export class GroupsService {
         0,
       );
       const averageResultPercent =
-        group.results.length > 0 ? totalScore / group.results.length : null;
+        group.results.length > 0 ? Number((totalScore / group.results.length).toFixed(0)) : null;
 
       return {
         ...group,

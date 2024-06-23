@@ -184,6 +184,34 @@ export class TestsService {
     return null;
   }
 
+  async getUsersTestsResults() {
+    const userTests = await this.prisma.userTest.findMany({
+      include: {
+        test: {
+          include: {
+            questions: false,
+            _count: {
+              select: {
+                questions: true,
+              },
+            },
+          },
+        },
+        result: true,
+      },
+    });
+
+    if (userTests) {
+      return userTests.map((userTest) => ({
+        ...userTest.test,
+        isDone: userTest.isDone,
+        result: userTest.result,
+        questionsCount: userTest.test._count.questions,
+      }));
+    }
+    return null;
+  }
+
   async getAllTestResultsByTestId(testId: number) {
     const results = await this.prisma.userTest.findMany({
       where: {

@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -26,6 +20,8 @@ model User {
   tests       UserTest[]
   results     Result[]
   userAnswers UserAnswer[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum UserRole {
@@ -41,6 +37,8 @@ model Group {
   members      User[]
   groupTests   GroupTest[]
   results      Result[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Test {
@@ -53,6 +51,8 @@ model Test {
   userAnswers UserAnswer[]
   groupTests  GroupTest[]
   userTests  UserTest[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model UserTest {
@@ -63,6 +63,8 @@ model UserTest {
   isDone      Boolean   @default(false)
   result      Result?   @relation(fields: [resultId], references: [id])
   resultId    Int?      @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userId, testId], map: "userIdTestIdUnique")
 }
@@ -72,6 +74,8 @@ model GroupTest {
   groupId     Int
   test        Test      @relation(fields: [testId], references: [id])
   testId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([groupId, testId], map: "groupIdTestIdUnique")
 }
@@ -85,6 +89,8 @@ model Question {
   testId      Int
   answers     Answer[]
   userAnswers UserAnswer[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Answer {
@@ -93,6 +99,8 @@ model Answer {
   isCorrect   Boolean
   question    Question  @relation(fields: [questionId], references: [id])
   questionId  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model UserAnswer {
@@ -104,6 +112,8 @@ model UserAnswer {
   questionId  Int
   answerIds   Int[]
   textAnswer  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userId, questionId], map: "userIdQuestionIdUnique")
 }
@@ -119,4 +129,6 @@ model Result {
   userTest    UserTest?
   score       Int
   totalScore  Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

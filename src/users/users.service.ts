@@ -21,24 +21,26 @@ export class UsersService {
     });
 
     const formattedUsers = users.map((user) => {
-      let scoreSum = 0 
-      let totalScoreSum = 0
-      let averageResultPercent = null
+      let scoreSum = 0;
+      let totalScoreSum = 0;
+      let averageResultPercent = null;
       user.results.forEach((result) => {
-        scoreSum += result.score
-        totalScoreSum += result.totalScore
-      })
+        scoreSum += result.score;
+        totalScoreSum += result.totalScore;
+      });
 
-      if(totalScoreSum > 0) {
-        averageResultPercent = Number((scoreSum / totalScoreSum * 100).toFixed(0))
+      if (totalScoreSum > 0) {
+        averageResultPercent = Number(
+          ((scoreSum / totalScoreSum) * 100).toFixed(0),
+        );
       }
       return {
         ...user,
         testsPassed: user.tests.filter((test) => test.isDone).length,
         testsTotal: user.tests.length,
-        averageResultPercent
-      }
-    })
+        averageResultPercent,
+      };
+    });
     return formattedUsers;
   }
 
@@ -70,7 +72,7 @@ export class UsersService {
     const newUser = await this.prisma.user.create({
       data: {
         ...data,
-        role: data.role ?? "USER",
+        role: data.role ?? 'USER',
       },
     });
     return newUser;
@@ -84,9 +86,14 @@ export class UsersService {
       include: {
         test: true,
         result: true,
-    }});
+      },
+    });
     if (userTests) {
-      return userTests.map((userTest) => ({...userTest.test, isDone: userTest.isDone, result: userTest.result}));
+      return userTests.map((userTest) => ({
+        ...userTest.test,
+        isDone: userTest.isDone,
+        result: userTest.result,
+      }));
     }
     return null;
   }
@@ -99,13 +106,29 @@ export class UsersService {
       include: {
         result: true,
       },
-    })
-    
+    });
+
     const userStats = {
       testsPassed: userTests.filter((userTest) => userTest.isDone).length,
       testsTotal: userTests.length,
-      averageResultPercent: userTests.filter((userTest) => userTest.isDone).reduce((acc, curr) => acc + curr.result.score, 0) / userTests.reduce((acc, curr) => acc + curr.result?.totalScore, 0)
-    }
-    return userStats
+      averageResultPercent:
+        userTests.length > 0
+          ? Number(
+              (
+                (userTests
+                  .filter((userTest) => userTest.isDone)
+                  .reduce((sum, userTest) => sum + userTest.result.score, 0) /
+                  userTests
+                    .filter((userTest) => userTest.isDone)
+                    .reduce(
+                      (sum, userTest) => sum + userTest.result.totalScore,
+                      0,
+                    )) *
+                100
+              ).toFixed(0),
+            ) /100
+          : null,
+    };
+    return userStats;
   }
 }
